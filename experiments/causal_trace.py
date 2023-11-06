@@ -544,7 +544,7 @@ def plot_trace_heatmap(result, savepdf=None, title=None, xlabel=None, modelname=
     for i in range(*result["subject_range"]):
         labels[i] = labels[i] + "*"
 
-    with plt.rc_context(rc={"font.family": "Times New Roman"}):
+    with plt.rc_context():
         fig, ax = plt.subplots(figsize=(3.5, 2), dpi=200)
         h = ax.pcolor(
             differences,
@@ -642,6 +642,12 @@ def predict_from_input(model, inp):
     probs = torch.softmax(out[:, -1], dim=1)
     p, preds = torch.max(probs, dim=1)
     return preds, p
+
+def predict_proba_from_input(model, inp):
+    out = model(**inp)["logits"]
+    probs = torch.softmax(out[:, -1], dim=1)
+    p, preds = torch.max(probs, dim=1)
+    return probs, preds, p
 
 
 def collect_embedding_std(mt, subjects):

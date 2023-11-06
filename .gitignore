@@ -4,6 +4,13 @@ data
 *_tmp_*_.json
 *_kmeng01g1gn*
 
+# ParaRel local directories
+pararel_data
+pararel_scripts
+
+# Alvis run scripts
+run_scripts 
+
 # Pre-trained hypernetworks
 baselines/*/weights
 
