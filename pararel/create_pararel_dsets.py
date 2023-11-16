@@ -113,6 +113,7 @@ def main(model_name, relation, output_folder, pararel_data_path):
     f = open(output_file, "w")
     for i, d in enumerate(data):
         dict_results = d
+        dict_results["known_id"] = i
         dict_results["prediction"] = answers[i]
         dict_results["prediction_p"] = round(p_list[i].item(), 8)
         

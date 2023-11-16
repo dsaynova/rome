@@ -37,7 +37,7 @@ The code performs the following steps to generate the data:
 To generate the dataset for relation P19, use the following code (note: it utilizes Lovisa's path to ParaRel):
 
 ```bash
-python create_pararel_dsets.py --model_name gpt2-xl --relation P19 --output_folder data --pararel_data_path "/cephyr/users/lovhag/Alvis/projects/pararel/data/all_n1_atlas_no_space"
+python -m pararel.create_pararel_dsets.py --model_name gpt2-xl --relation P19 --output_folder data --pararel_data_path "/cephyr/users/lovhag/Alvis/projects/pararel/data/all_n1_atlas_no_space"
 ```
 
 Currently, data generated using this code will be saved to `data`.
@@ -45,3 +45,15 @@ Currently, data generated using this code will be saved to `data`.
 ### Debug
 
 Add `CUDA_VISIBLE_DEVICES=2, python -m debugpy --wait-for-client --listen 5678 -m` before your code and use your python function like a module.
+
+
+## Run causal tracing on the ParaRel datasets
+
+```bash
+python -m experiments.causal_trace_pararel \
+    --model_name "gpt2-xl" \
+    --fact_file "/cephyr/users/lovhag/Alvis/projects/rome/data/P19_gpt2_xl_preds.jsonl" \
+    --output_dir "/cephyr/users/lovhag/Alvis/projects/rome/data/results/gpt2-xl/causal_trace_pararel"
+```
+
+To run as a job on Alvis, use `pararel/alvis_script_causal_tracing.sh`.
