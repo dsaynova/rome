@@ -57,3 +57,7 @@ python -m experiments.causal_trace_pararel \
 ```
 
 To run as a job on Alvis, use `pararel/alvis_script_causal_tracing.sh`.
+
+### Performance results
+
+Running on a T4 GPU for four hours produces results for approximately 40 samples (for 3 targets: _any_, _candidate_ and _gold_). So running one sample takes approximately 6 minutes.
