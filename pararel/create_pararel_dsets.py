@@ -78,7 +78,7 @@ def main(model_name, relation, output_folder, pararel_data_path):
     
     prompts = [val["prompt"] for val in data]
     attributes = [val["attribute"] for val in data]
-    batchsize = 32
+    batchsize = 1 # cannot have a larger batch size since model cannot handle inputs of different length
     preds_list = []
     p_list = []
     candidate_preds_list = []

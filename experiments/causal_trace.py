@@ -592,10 +592,11 @@ def plot_all_flow(mt, prompt, subject=None):
 def make_inputs(tokenizer, prompts, device="cuda"):
     token_lists = [tokenizer.encode(p) for p in prompts]
     maxlen = max(len(t) for t in token_lists)
+    assert all([len(token_list)==maxlen for token_list in token_lists]), "Inputs must be of same length, GPT2-XL does not support padding"
     if "[PAD]" in tokenizer.all_special_tokens:
         pad_id = tokenizer.all_special_ids[tokenizer.all_special_tokens.index("[PAD]")]
     else:
-        pad_id = 0
+        pad_id = 0 
     input_ids = [[pad_id] * (maxlen - len(t)) + t for t in token_lists]
     # position_ids = [[0] * (maxlen - len(t)) + list(range(len(t))) for t in token_lists]
     attention_mask = [[0] * (maxlen - len(t)) + [1] * len(t) for t in token_lists]

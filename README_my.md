@@ -43,7 +43,7 @@ The code performs the following steps to generate the data:
 To generate the dataset for relation P19, use the following code (note: it utilizes Lovisa's path to ParaRel):
 
 ```bash
-python -m pararel.create_pararel_dsets.py --model_name gpt2-xl --relation P19 --output_folder data --pararel_data_path "/cephyr/users/lovhag/Alvis/projects/pararel/data/all_n1_atlas_no_space"
+python -m pararel.create_pararel_dsets --model_name gpt2-xl --relation P19 --output_folder data --pararel_data_path "/cephyr/users/lovhag/Alvis/projects/pararel/data/all_n1_atlas_no_space"
 ```
 
 Currently, data generated using this code will be saved to `data`.
