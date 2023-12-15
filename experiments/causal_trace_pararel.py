@@ -101,6 +101,7 @@ def main():
             noise_level = float(noise_level[1:])
 
     answer_type2expect_field = {"gold": "attribute", "candidate": "candidate_prediction", "any": "prediction"}
+    answer_type2p_field = {"gold": "gold_p", "candidate": "candidate_p", "any": "prediction_p"}
 
     for knowledge in tqdm(knowns):
         known_id = knowledge["known_id"]
@@ -119,6 +120,7 @@ def main():
                         noise=noise_level,
                         uniform_noise=uniform_noise,
                         replace=args.replace,
+                        base_score=knowledge[answer_type2p_field[answer_type]] #hack: we already have this in the (model specific) data
                     )
                     numpy_result = {
                         k: v.detach().cpu().numpy() if torch.is_tensor(v) else v
@@ -135,6 +137,12 @@ def main():
                 plot_trace_heatmap(plot_result, savepdf=pdfname)
             
 
+def get_model_prob_for_token(model, inp, token_id):
+    with torch.no_grad():
+        out = model(**inp)["logits"]
+        probs = torch.softmax(out[:, -1], dim=1)
+    return probs[:,token_id]
+
 def calculate_hidden_flow(
     mt,
     prompt,
@@ -147,6 +155,7 @@ def calculate_hidden_flow(
     window=10,
     kind=None,
     expect=None,
+    base_score=None
 ):
     """
     Runs causal tracing over every token/layer combination in the network
@@ -193,6 +202,7 @@ def calculate_hidden_flow(
     return dict(
         scores=differences,
         low_score=low_score,
+        high_score=base_score,
         input_ids=inp["input_ids"][0],
         input_tokens=decode_tokens(mt.tokenizer, inp["input_ids"][0]),
         subject_range=e_range,

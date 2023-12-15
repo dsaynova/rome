@@ -20,6 +20,12 @@ pip install checklist==0.0.11 allennlp==2.9.0
 
 I have here made sure to install two troublesome packages separately after the majority of the virtual environment is in place.  
 
+## Test standard causal code
+
+CUDA_VISIBLE_DEVICES=2, python -m debugpy --wait-for-client --listen 5678 -m experiments.causal_trace \
+    --model_name "gpt2-xl" \
+    --noise_level 0.1
+
 ## Create ParaRel based data
 
 We can create a dataset based on ParaRel onto which we can perform causal tracing, like the `known_1000.json` dataset. To this dataset, we add some metrics, as in the example below. 
