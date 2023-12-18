@@ -54,6 +54,7 @@ def main():
     aa("--output_dir", default="results/{model_name}/causal_trace_pararel")
     aa("--noise_level", default="s3", type=parse_noise_rule)
     aa("--replace", default=0, type=int)
+    aa("--te_flag", default=False, type=bool)
     args = parser.parse_args()
 
     modeldir = f'r{args.replace}_{args.model_name.replace("/", "_")}'
@@ -121,6 +122,7 @@ def main():
                         uniform_noise=uniform_noise,
                         replace=args.replace,
                         base_score=knowledge[answer_type2p_field[answer_type]] #hack: we already have this in the (model specific) data
+                        te_flag=args.te_flag, #speedup for total effect only
                     )
                     numpy_result = {
                         k: v.detach().cpu().numpy() if torch.is_tensor(v) else v
@@ -129,6 +131,8 @@ def main():
                     numpy.savez(filename, **numpy_result)
                 else:
                     numpy_result = numpy.load(filename, allow_pickle=True)
+                if args.te_flag: #speedup for total effect only
+                    continue
                 plot_result = dict(numpy_result)
                 plot_result["kind"] = kind
                 pdfname = f'{pdf_dir}/{known_id}_{answer_type}{kind_suffix}.pdf'
@@ -155,7 +159,8 @@ def calculate_hidden_flow(
     window=10,
     kind=None,
     expect=None,
-    base_score=None
+    base_score=None,
+    te_flag=False,
 ):
     """
     Runs causal tracing over every token/layer combination in the network
@@ -172,6 +177,17 @@ def calculate_hidden_flow(
     low_score = trace_with_patch(
         mt.model, inp, [], answer_t, e_range, noise=noise, uniform_noise=uniform_noise
     ).item()
+    if te_flag: 
+        return dict(
+        scores=None,
+        low_score=low_score,
+        input_ids=inp["input_ids"][0],
+        input_tokens=decode_tokens(mt.tokenizer, inp["input_ids"][0]),
+        subject_range=e_range,
+        window=window,
+        kind=kind or "",
+        answer=expect, #hack
+    )
     if not kind:
         differences = trace_important_states(
             mt.model,

@@ -90,6 +90,7 @@ def main(model_name, relation, output_folder, pararel_data_path):
     with torch.no_grad():
         for i in range(0, len(prompts), batchsize):
             inp = make_inputs(mt.tokenizer, prompts[i:i+batchsize])
+            
             preds, p = predict_from_input(mt.model, inp)
             preds_list.extend(preds)
             p_list.extend(p)
@@ -135,7 +136,9 @@ if __name__ == "__main__":
         "--model_name", choices=["gpt2-xl", "EleutherAI/gpt-j-6B"]
     )
     parser.add_argument(
-        "--relation", choices=["P19", "P101"]
+        "--relation", choices=["P101", "P103", "P106", "P127", "P131", "P136", "P1376", "P138", "P140", "P1412", "P159", 
+                               "P17", "P176", "P178", "P19", "P20", "P264", "P27", "P276", "P279", "P30", "P36", "P361", 
+                               "P364", "P407", "P413", "P449", "P495", "P740", "P937"]
     )
     parser.add_argument(
         "--output_folder", type=str
