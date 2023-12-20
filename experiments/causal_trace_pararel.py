@@ -136,8 +136,6 @@ def main():
                 plot_result = dict(numpy_result)
                 plot_result["kind"] = kind
                 pdfname = f'{pdf_dir}/{known_id}_{answer_type}{kind_suffix}.pdf'
-                if known_id > 200:
-                    continue
                 plot_trace_heatmap(plot_result, savepdf=pdfname)
             
 
