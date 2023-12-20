@@ -121,7 +121,7 @@ def main():
                         noise=noise_level,
                         uniform_noise=uniform_noise,
                         replace=args.replace,
-                        base_score=knowledge[answer_type2p_field[answer_type]] #hack: we already have this in the (model specific) data
+                        base_score=knowledge[answer_type2p_field[answer_type]], #hack: we already have this in the (model specific) data
                         te_flag=args.te_flag, #speedup for total effect only
                     )
                     numpy_result = {
