@@ -59,7 +59,7 @@ Add `CUDA_VISIBLE_DEVICES=2, python -m debugpy --wait-for-client --listen 5678 -
 python -m experiments.causal_trace_pararel \
     --model_name "gpt2-xl" \
     --fact_file "/cephyr/users/lovhag/Alvis/projects/rome/data/P19_gpt2_xl_preds.jsonl" \
-    --output_dir "/cephyr/users/lovhag/Alvis/projects/rome/data/results/gpt2-xl/causal_trace_pararel"
+    --output_dir "/cephyr/users/lovhag/Alvis/projects/rome/data/results/gpt2-xl/P19/causal_trace_pararel_test"
 ```
 
 To run as a job on Alvis, use `pararel/alvis_script_causal_tracing.sh`.
@@ -67,3 +67,11 @@ To run as a job on Alvis, use `pararel/alvis_script_causal_tracing.sh`.
 ### Performance results
 
 Running on a T4 GPU for four hours produces results for approximately 40 samples (for 3 targets: _any_, _candidate_ and _gold_). So running one sample takes approximately 6 minutes.
+
+## Analyze KL divergences for the top10 tokens predicted with the LAMA prompt
+
+To get the distributions over impactful model states for different prompts and output tokens, run the following code for the relations of interest:
+- [create_pararel_dsets.py](pararel/create_pararel_dsets.py) using e.g. [alvis_script_create_data.sh](pararel/alvis_script_create_data.sh), and then
+- [causal_trace_pararel.py](experiments/causal_trace_pararel.py) using e.g. [alvis_script_causal_tracing.sh](pararel/alvis_script_causal_tracing.sh).
+
+Then, the KL divergences can be analyzed using [analyze_pararel_causal_tracing_results_top10.ipynb](notebooks/analyze_pararel_causal_tracing_results_top10.ipynb).

@@ -55,6 +55,7 @@ def main():
     aa("--noise_level", default="s3", type=parse_noise_rule)
     aa("--replace", default=0, type=int)
     aa("--te_flag", default=False, type=bool)
+    aa("--make_plots", default=False, type=bool)
     args = parser.parse_args()
 
     modeldir = f'r{args.replace}_{args.model_name.replace("/", "_")}'
@@ -104,11 +105,13 @@ def main():
     answer_type2expect_field = {"gold": "attribute", "candidate": "candidate_prediction", "any": "prediction"}
     answer_type2p_field = {"gold": "gold_p", "candidate": "candidate_p", "any": "prediction_p"}
 
+    candidates = set([knowledge["candidate_prediction"] for knowledge in knowns])
+
     for knowledge in tqdm(knowns):
         known_id = knowledge["known_id"]
-        for kind in None, "mlp", "attn":
+        for kind in ["mlp"]: # None, "mlp", "attn":
             kind_suffix = f"_{kind}" if kind else ""
-            for answer_type in "gold", "candidate", "any":
+            for answer_type in ["any"]: #"gold", "candidate", "any":
                 filename = f"{result_dir}/{known_id}_{answer_type}{kind_suffix}.npz"
                 if not os.path.isfile(filename):
                     expect = knowledge[answer_type2expect_field[answer_type]]
@@ -116,12 +119,11 @@ def main():
                         mt,
                         knowledge["prompt"],
                         knowledge["subject"],
-                        expect=expect, #hack
+                        expects=[expect] if not answer_type=="any" else knowledge["top10_tokens"], # [expect] if not answer_type=="candidate" else [expect]+list(candidates-{expect}),
                         kind=kind,
                         noise=noise_level,
                         uniform_noise=uniform_noise,
                         replace=args.replace,
-                        base_score=knowledge[answer_type2p_field[answer_type]], #hack: we already have this in the (model specific) data
                         te_flag=args.te_flag, #speedup for total effect only
                     )
                     numpy_result = {
@@ -133,10 +135,11 @@ def main():
                     numpy_result = numpy.load(filename, allow_pickle=True)
                 if args.te_flag: #speedup for total effect only
                     continue
-                plot_result = dict(numpy_result)
-                plot_result["kind"] = kind
-                pdfname = f'{pdf_dir}/{known_id}_{answer_type}{kind_suffix}.pdf'
-                plot_trace_heatmap(plot_result, savepdf=pdfname)
+                if args.make_plots:
+                    plot_result = dict(numpy_result)
+                    plot_result["kind"] = kind
+                    pdfname = f'{pdf_dir}/{known_id}_{answer_type}{kind_suffix}.pdf'
+                    plot_trace_heatmap(plot_result, savepdf=pdfname)
             
 
 def get_model_prob_for_token(model, inp, token_id):
@@ -156,8 +159,7 @@ def calculate_hidden_flow(
     replace=False,
     window=10,
     kind=None,
-    expect=None,
-    base_score=None,
+    expects=None,
     te_flag=False,
 ):
     """
@@ -165,8 +167,17 @@ def calculate_hidden_flow(
     and returns a dictionary numerically summarizing the results.
     """
     inp = make_inputs(mt.tokenizer, [prompt] * (samples + 1))
-    [answer_t] = mt.tokenizer.encode(" "+expect.strip())
-
+    inp_one = make_inputs(mt.tokenizer, [prompt])
+    with torch.no_grad():
+        out = mt.model(**inp_one)["logits"]
+        probs = torch.softmax(out[:, -1], dim=1)
+        
+    answer_t = []
+    for expect in expects:
+        [tmp] = mt.tokenizer.encode(" "+expect.strip())
+        answer_t.append(tmp)
+    base_score = probs[0,answer_t] #add the prob assigned to each candidate
+    
     e_range = find_token_range(mt.tokenizer, inp["input_ids"][0], subject)
     if token_range == "subject_last":
         token_range = [e_range[1] - 1]
@@ -174,11 +185,12 @@ def calculate_hidden_flow(
         raise ValueError(f"Unknown token_range: {token_range}")
     low_score = trace_with_patch(
         mt.model, inp, [], answer_t, e_range, noise=noise, uniform_noise=uniform_noise
-    ).item()
+    )
     if te_flag: 
         return dict(
         scores=None,
         low_score=low_score,
+        high_score=base_score,
         input_ids=inp["input_ids"][0],
         input_tokens=decode_tokens(mt.tokenizer, inp["input_ids"][0]),
         subject_range=e_range,

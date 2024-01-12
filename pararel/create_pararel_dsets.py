@@ -45,9 +45,9 @@ def get_rank_of_pred(pred, model_probs):
 
 def predict_top_candidate_from_input(model, inp, candidates_tokens):
     out = model(**inp)["logits"]
-    opt_probs = torch.softmax(out[:, -1], dim=1)
-    candidate_opt_probs = opt_probs[:,candidates_tokens]
-    p, preds_ix = torch.max(candidate_opt_probs, dim=1)
+    opt_probs = torch.softmax(out[-1], dim=1)[-1]
+    candidate_opt_probs = opt_probs[candidates_tokens]
+    p, preds_ix = torch.max(candidate_opt_probs, dim=0)
     preds = torch.index_select(candidates_tokens, 0, preds_ix)
     
     return preds, p, opt_probs
@@ -78,7 +78,6 @@ def main(model_name, relation, output_folder, pararel_data_path):
     
     prompts = [val["prompt"] for val in data]
     attributes = [val["attribute"] for val in data]
-    batchsize = 1 # cannot have a larger batch size since model cannot handle inputs of different length
     preds_list = []
     p_list = []
     candidate_preds_list = []
@@ -86,28 +85,41 @@ def main(model_name, relation, output_folder, pararel_data_path):
     candidate_ranks_list = []
     correct_ranks_list = []
     correct_p_list = []
-    # TODO: get top candidate and its rank
+    lama_prompt_top10_tokens = {}
+    top10_tokens_list = []
+    top10_tokens_probs_list = []
     with torch.no_grad():
-        for i in range(0, len(prompts), batchsize):
-            inp = make_inputs(mt.tokenizer, prompts[i:i+batchsize])
+        for i in range(len(prompts)):
+            inp = make_inputs(mt.tokenizer, [prompts[i]])
             
             preds, p = predict_from_input(mt.model, inp)
-            preds_list.extend(preds)
-            p_list.extend(p)
+            preds_list.append(int(preds))
+            p_list.append(float(p))
             
             candidate_preds, candidate_p, opt_probs = predict_top_candidate_from_input(mt.model, inp, candidates_tokens)
-            candidate_ranks = [get_rank_of_pred(candidate_preds[ix], opt_probs[ix]) for ix in range(opt_probs.shape[0])]
-            candidate_preds_list.extend(candidate_preds)
-            candidate_p_list.extend(candidate_p)
-            candidate_ranks_list.extend(candidate_ranks)
+            candidate_ranks = get_rank_of_pred(candidate_preds, opt_probs)
+            candidate_preds_list.append(int(candidate_preds))
+            candidate_p_list.append(float(candidate_p))
+            candidate_ranks_list.append(int(candidate_ranks))
             
-            attributes_subset = attributes[i:i+batchsize]
-            correct_ranks = [get_rank_of_pred(token2id[attributes_subset[ix]], opt_probs[ix]) for ix in range(opt_probs.shape[0])]
-            correct_p = [opt_probs[ix, token2id[attributes_subset[ix]]] for ix in range(opt_probs.shape[0])]
-            correct_ranks_list.extend(correct_ranks)
-            correct_p_list.extend(correct_p)
+            correct_ranks = get_rank_of_pred(token2id[attributes[i]], opt_probs)
+            correct_p = opt_probs[token2id[attributes[i]]]
+            correct_ranks_list.append(int(correct_ranks))
+            correct_p_list.append(float(correct_p))
+            
+            if data[i]["subject"] in lama_prompt_top10_tokens:
+                top10_tokens = lama_prompt_top10_tokens[data[i]["subject"]]
+            else:
+                _, top10_tokens = torch.topk(opt_probs, 10)
+                top10_tokens = top10_tokens.tolist()
+                lama_prompt_top10_tokens[data[i]["subject"]] = top10_tokens
+            top10_tokens_probs = opt_probs[top10_tokens]
+            top10_tokens_list.append(top10_tokens)
+            top10_tokens_probs_list.append(top10_tokens_probs.tolist())
+            
     answers = decode_tokens(mt.tokenizer, preds_list)
     candidate_answers = decode_tokens(mt.tokenizer, candidate_preds_list)
+    top10_tokens = [decode_tokens(mt.tokenizer, val) for val in top10_tokens_list]
     
     printable_model_name = model_name.split("/")[-1].replace("-", "_")
     output_file = os.path.join(output_folder, f"{relation}_{printable_model_name}_preds.jsonl")
@@ -116,14 +128,17 @@ def main(model_name, relation, output_folder, pararel_data_path):
         dict_results = d
         dict_results["known_id"] = i
         dict_results["prediction"] = answers[i]
-        dict_results["prediction_p"] = round(p_list[i].item(), 8)
+        dict_results["prediction_p"] = round(p_list[i], 8)
         
         dict_results["candidate_prediction"] = candidate_answers[i]
-        dict_results["candidate_p"] = round(candidate_p_list[i].item(), 8)
-        dict_results["candidate_rank"] = candidate_ranks_list[i].item()
+        dict_results["candidate_p"] = round(candidate_p_list[i], 8)
+        dict_results["candidate_rank"] = candidate_ranks_list[i]
         
-        dict_results["gold_rank"] = correct_ranks_list[i].item()
-        dict_results["gold_p"] = round(correct_p_list[i].item(), 8)
+        dict_results["gold_rank"] = correct_ranks_list[i]
+        dict_results["gold_p"] = round(correct_p_list[i], 8)
+        
+        dict_results["top10_tokens"] = top10_tokens[i]
+        dict_results["top10_tokens_probs"] = top10_tokens_probs_list[i]
         f.write(json.dumps(dict_results))
         f.write("\n")
     f.close()
