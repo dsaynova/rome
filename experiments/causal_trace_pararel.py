@@ -174,7 +174,10 @@ def calculate_hidden_flow(
         
     answer_t = []
     for expect in expects:
-        [tmp] = mt.tokenizer.encode(" "+expect.strip())
+        if len(mt.tokenizer.encode(" "+expect.strip()))==1:
+            [tmp] = mt.tokenizer.encode(" "+expect.strip())
+        else: 
+            [tmp] =  mt.tokenizer.encode(expect.strip())#when top prediction is e.g. 's and does not require space
         answer_t.append(tmp)
     base_score = probs[0,answer_t] #add the prob assigned to each candidate
     
