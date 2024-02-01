@@ -534,7 +534,7 @@ def plot_hidden_flow(
     )
     plot_trace_heatmap(result, savepdf)
 
-def plot_trace_heatmap_from_values(differences, low_score, answer, kind, window, labels,
+def plot_trace_heatmap_from_values(differences, low_score, high_score, answer, kind, window, labels,
                                    savepdf, title, xlabel, modelname):
     with plt.rc_context():
         fig, ax = plt.subplots(figsize=(3.5, 2), dpi=200)
@@ -544,6 +544,7 @@ def plot_trace_heatmap_from_values(differences, low_score, answer, kind, window,
                 kind
             ],
             vmin=low_score,
+            vmax=high_score
         )
         ax.invert_yaxis()
         ax.set_yticks([0.5 + i for i in range(len(differences))])
@@ -618,6 +619,7 @@ def plot_normalized_trace_heatmap_from_values(differences, vmin, vmax, bartitle,
 def plot_trace_heatmap(result, savepdf=None, title=None, xlabel=None, modelname=None):
     differences = result["scores"]
     low_score = result["low_score"]
+    high_score = None #result["high_score"]
     answer = result["answer"]
     kind = (
         None
@@ -629,7 +631,7 @@ def plot_trace_heatmap(result, savepdf=None, title=None, xlabel=None, modelname=
     for i in range(*result["subject_range"]):
         labels[i] = labels[i] + "*"
 
-    plot_trace_heatmap_from_values(differences, low_score, answer, kind, window, labels,
+    plot_trace_heatmap_from_values(differences, low_score, high_score, answer, kind, window, labels,
                                    savepdf, title, xlabel, modelname)
 
 
