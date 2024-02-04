@@ -38,6 +38,9 @@ def reformat_pararel2rome(val, relation_id):
 def template_ends_with_mask(template):
     return template["pattern"].replace(".","").strip()[-3:]=="[Y]"
 
+def template_starts_with_subj(template):
+    return template["pattern"].replace(".","").strip()[0:3]=="[X]"
+
 def get_rank_of_pred(pred, model_probs):
     # assumes that pred is the token id and model_probs an array of dim (vocab_size,)
     sorted_indices = torch.argsort(model_probs, descending=True)
@@ -59,9 +62,9 @@ def main(model_name, relation, output_folder, pararel_data_path):
     data = []
     for val in data_tmp:
         # only add samples for which the pattern is suitable for ARMs
-        if template_ends_with_mask(val):
+        if template_ends_with_mask(val) and template_starts_with_subj(val):
             data.append(reformat_pararel2rome(val, relation))
-    print(f"Data length after removing non-ARM-compatible templates: {len(data)}") 
+    print(f"Data length after removing non-ARM-compatible and not subject-first templates: {len(data)}") 
     
     pararel_options_file = os.path.join(pararel_data_path, f"{relation}_options.txt")
     with open(pararel_options_file) as f:
