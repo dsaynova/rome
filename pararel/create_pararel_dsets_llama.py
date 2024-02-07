@@ -59,23 +59,41 @@ def main(model_name, relation, output_folder, pararel_data_path, cache_folder):
     print(f"Producing data for relation {relation}...")
     data_tmp = read_jsonl_file(os.path.join(pararel_data_path, f"{relation}.jsonl"))
     print(f"Data length including all templates: {len(data_tmp)}")    
-    data = []
+    data_template = []
     for val in data_tmp:
         # only add samples for which the pattern is suitable for ARMs
         if template_ends_with_mask(val) and template_starts_with_subj(val):
-            data.append(reformat_pararel2rome(val, relation))
-    print(f"Data length after removing non-ARM-compatible and not subject-first templates: {len(data)}") 
+            data_template.append(reformat_pararel2rome(val, relation))
+    print(f"Data length after removing non-ARM-compatible and not subject-first templates: {len(data_template)}") 
     
     pararel_options_file = os.path.join(pararel_data_path, f"{relation}_options.txt")
     with open(pararel_options_file) as f:
-        options = [line.strip() for line in f.readlines()]   
-    
+        options_all = [line.strip() for line in f.readlines()]  
+        
+        
     mt = ModelAndTokenizer(
         model_name,
         torch_dtype=(torch.float16 if "20b" in model_name else None),
         cache_folder=cache_folder,
     )
-    candidates_tokens = make_inputs(mt.tokenizer, [" "+option for option in options])["input_ids"].squeeze()
+    
+    options=[]
+    for o in options_all:
+        if len(mt.tokenizer.encode(o, add_special_tokens=False))==1:
+            options.append(o)
+        
+    data=[]
+    for val in data_template:
+        if val["attribute"] in options:
+            data.append(val)
+        
+    print(f"Data length after removing partial objects: {len(data)}")     
+
+    if "LlamaTokenizer" in str(type(mt.tokenizer)):
+        #don't add special tokens (<s>)
+        candidates_tokens = make_inputs(mt.tokenizer, [option for option in options], add_special_tokens=False)["input_ids"].squeeze()
+    else:
+        candidates_tokens = make_inputs(mt.tokenizer, [" "+option for option in options])["input_ids"].squeeze()
     assert candidates_tokens.shape==(len(options),)
     token2id = {options[ix]: candidates_tokens[ix].item() for ix in range(len(options))}
     
@@ -151,7 +169,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--model_name", choices=["gpt2-xl", "EleutherAI/gpt-j-6B"]
+        "--model_name", choices=["gpt2-xl", "EleutherAI/gpt-j-6B", "meta-llama/Llama-2-7b-hf"]
     )
     parser.add_argument(
         "--relation", choices=["P101", "P103", "P106", "P127", "P131", "P136", "P1376", "P138", "P140", "P1412", "P159", 

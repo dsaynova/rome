@@ -48,6 +48,7 @@ def main():
             "gpt2-large",
             "gpt2-medium",
             "gpt2",
+            "meta-llama/Llama-2-7b-hf",
         ],
     )
     aa("--fact_file", default=None)
@@ -56,6 +57,7 @@ def main():
     aa("--replace", default=0, type=int)
     aa("--te_flag", default=False, type=bool)
     aa("--make_plots", default=False, type=bool)
+    aa("--cache_folder", required=True)
     args = parser.parse_args()
 
     modeldir = f'r{args.replace}_{args.model_name.replace("/", "_")}'
@@ -69,7 +71,7 @@ def main():
     # Half precision to let the 20b model fit.
     torch_dtype = torch.float16 if "20b" in args.model_name else None
 
-    mt = ModelAndTokenizer(args.model_name, torch_dtype=torch_dtype)
+    mt = ModelAndTokenizer(args.model_name, torch_dtype=torch_dtype, cache_folder=args.cache_folder)
 
     if args.fact_file is None:
         knowns = KnownsDataset(DATA_DIR)
@@ -174,10 +176,15 @@ def calculate_hidden_flow(
         
     answer_t = []
     for expect in expects:
-        if len(mt.tokenizer.encode(" "+expect.strip()))==1:
-            [tmp] = mt.tokenizer.encode(" "+expect.strip())
-        else: 
-            [tmp] =  mt.tokenizer.encode(expect.strip())#when top prediction is e.g. 's and does not require space
+        #for LLaMA
+        if "LlamaTokenizer" in str(type(mt.tokenizer)):
+            #NOTE: assumes pre-filtered for single-token objects
+            [tmp] =  mt.tokenizer.encode(expect.strip(), add_special_tokens=False) #don't add bos "<s>"  
+        else:
+            if len(mt.tokenizer.encode(" "+expect.strip()))==1:
+                [tmp] = mt.tokenizer.encode(" "+expect.strip())
+            else: 
+                [tmp] =  mt.tokenizer.encode(expect.strip())#when top prediction is e.g. 's and does not require space
         answer_t.append(tmp)
     base_score = probs[0,answer_t] #add the prob assigned to each candidate
     

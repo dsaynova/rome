@@ -9,7 +9,7 @@ import torch
 from datasets import load_dataset
 from matplotlib import pyplot as plt
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaTokenizer
 
 from dsets import KnownsDataset
 from rome.tok_dataset import (
@@ -47,12 +47,14 @@ def main():
             "gpt2-large",
             "gpt2-medium",
             "gpt2",
+            "meta-llama/Llama-2-7b-hf",
         ],
     )
     aa("--fact_file", default=None)
     aa("--output_dir", default="results/{model_name}/causal_trace")
     aa("--noise_level", default="s3", type=parse_noise_rule)
     aa("--replace", default=0, type=int)
+    aa("--cache_folder", required=True)
     args = parser.parse_args()
 
     modeldir = f'r{args.replace}_{args.model_name.replace("/", "_")}'
@@ -66,7 +68,7 @@ def main():
     # Half precision to let the 20b model fit.
     torch_dtype = torch.float16 if "20b" in args.model_name else None
 
-    mt = ModelAndTokenizer(args.model_name, torch_dtype=torch_dtype)
+    mt = ModelAndTokenizer(args.model_name, torch_dtype=torch_dtype, cache_folder=args.cache_folder)
 
     if args.fact_file is None:
         knowns = KnownsDataset(DATA_DIR)
@@ -461,14 +463,16 @@ class ModelAndTokenizer:
         tokenizer=None,
         low_cpu_mem_usage=False,
         torch_dtype=None,
+        cache_folder=None,
     ):
         if tokenizer is None:
             assert model_name is not None
-            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token = True, cache_dir=cache_folder)
         if model is None:
             assert model_name is not None
             model = AutoModelForCausalLM.from_pretrained(
-                model_name, low_cpu_mem_usage=low_cpu_mem_usage, torch_dtype=torch_dtype
+                model_name, low_cpu_mem_usage=low_cpu_mem_usage, 
+                torch_dtype=torch_dtype, use_auth_token = True, cache_dir=cache_folder
             )
             nethook.set_requires_grad(False, model)
             model.eval().cuda()
@@ -477,7 +481,7 @@ class ModelAndTokenizer:
         self.layer_names = [
             n
             for n, m in model.named_modules()
-            if (re.match(r"^(transformer|gpt_neox)\.(h|layers)\.\d+$", n))
+            if (re.match(r"^(transformer|gpt_neox|model)\.(h|layers)\.\d+$", n))
         ]
         self.num_layers = len(self.layer_names)
 
@@ -500,6 +504,12 @@ def layername(model, num, kind=None):
         if kind == "attn":
             kind = "attention"
         return f'gpt_neox.layers.{num}{"" if kind is None else "." + kind}'
+    if hasattr(model, "model"):  #for LLaMA
+        if kind == "embed":
+            return "model.embed_tokens"
+        if kind == "attn":
+            kind = "self_attn"
+        return f'model.layers.{num}{"" if kind is None else "." + kind}'
     assert False, "unknown transformer structure"
 
 
@@ -641,8 +651,11 @@ def plot_all_flow(mt, prompt, subject=None):
 
 
 # Utilities for dealing with tokens
-def make_inputs(tokenizer, prompts, device="cuda"):
-    token_lists = [tokenizer.encode(p) for p in prompts]
+def make_inputs(tokenizer, prompts, device="cuda", add_special_tokens=True):
+    if "LlamaTokenizer" in str(type(tokenizer)):
+        token_lists = [tokenizer.encode(p, add_special_tokens=add_special_tokens) for p in prompts]
+    else:
+        token_lists = [tokenizer.encode(p) for p in prompts]
     maxlen = max(len(t) for t in token_lists)
     assert all([len(token_list)==maxlen for token_list in token_lists]), "Inputs must be of same length, GPT2-XL does not support padding"
     if "[PAD]" in tokenizer.all_special_tokens:
@@ -668,6 +681,9 @@ def decode_tokens(tokenizer, token_array):
 def find_token_range(tokenizer, token_array, substring):
     toks = decode_tokens(tokenizer, token_array)
     whole_string = "".join(toks)
+    #for LLaMA
+    if "LlamaTokenizer" in str(type(tokenizer)):
+        substring = substring.replace(" ", "")
     char_loc = whole_string.index(substring)
     loc = 0
     tok_start, tok_end = None, None
