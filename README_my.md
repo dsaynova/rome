@@ -75,3 +75,14 @@ To get the distributions over impactful model states for different prompts and o
 - [causal_trace_pararel.py](experiments/causal_trace_pararel.py) using e.g. [alvis_script_causal_tracing.sh](pararel/alvis_script_causal_tracing.sh).
 
 Then, the KL divergences can be analyzed using [analyze_pararel_causal_tracing_results_top10.ipynb](notebooks/analyze_pararel_causal_tracing_results_top10.ipynb).
+
+# RQ1
+
+First, get the queries and corresponding causal tracing results for all relations of interest.
+
+Then, process the data by running the script `RQ1/process_relation.sh <relation-to-process>`. Make sure that you have run the following commands before doing this:
+```
+module purge
+module load PyTorch/1.11.0-foss-2021a-CUDA-11.3.1 torchvision/0.12.0-foss-2021a-PyTorch-1.11.0-CUDA-11.3.1
+source venv/bin/activate
+```
