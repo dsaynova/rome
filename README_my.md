@@ -86,3 +86,5 @@ module purge
 module load PyTorch/1.11.0-foss-2021a-CUDA-11.3.1 torchvision/0.12.0-foss-2021a-PyTorch-1.11.0-CUDA-11.3.1
 source venv/bin/activate
 ```
+
+After this, the results are processed using notebooks in `notebooks/acl_2024`.

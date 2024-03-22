@@ -21,8 +21,8 @@ ct_data_paths["P19"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_191579
 ct_data_paths["P20"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_1917992_P20"
 ct_data_paths["P27"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_1917993_P27"
 ct_data_paths["P101"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_1917980_P101"
-#ct_data_paths["P495"]="${DATA_FOLDER}/results/gpt2-xl/P495/causal_trace_pararel_1883397_P495" -- TO BE ADDED!!
-#ct_data_paths["P740"]="${DATA_FOLDER}/results/gpt2-xl/P740/causal_trace_pararel_1883935_P740"
+ct_data_paths["P495"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_2103386_P495"
+ct_data_paths["P740"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_2103207_P740"
 ct_data_paths["P1376"]="${DATA_FOLDER}/results/llama7B/causal_trace_pararel_1917979_P1376"
 
 python -m RQ1.process_data --output_file "${OUTPUT_FILE}" --queries_data_file ${QUERIES_FILE} --ct_data_folder "${ct_data_paths["${RELATION}"]}"
