@@ -179,7 +179,21 @@ def calculate_hidden_flow(
         #for LLaMA
         if "LlamaTokenizer" in str(type(mt.tokenizer)):
             #NOTE: assumes pre-filtered for single-token objects
-            [tmp] =  mt.tokenizer.encode(expect.strip(), add_special_tokens=False) #don't add bos "<s>"  
+            #print("Token: ", expect)
+            if len(mt.tokenizer.encode(expect.strip(), add_special_tokens=False))==1:
+                [tmp] =  mt.tokenizer.encode(expect.strip(), add_special_tokens=False) #don't add bos "<s>"
+            
+            ###FIX needed as encoder-decoder backtranslation of some chars adds SPIECE_UNDERLINE token
+            #special SPIECE_UNDERLINE token
+            elif expect=="":
+                [tmp] = [29871]
+            elif mt.tokenizer.encode(expect, add_special_tokens=False)[0]==29871:
+                [tmp] =  mt.tokenizer.encode(expect, add_special_tokens=False)[1:]
+               
+            else: 
+                print("Token: ", expect)
+                print("Token encode: ", mt.tokenizer.encode(expect.strip(), add_special_tokens=False))
+                [tmp] =  mt.tokenizer.encode(expect, add_special_tokens=False)
         else:
             if len(mt.tokenizer.encode(" "+expect.strip()))==1:
                 [tmp] = mt.tokenizer.encode(" "+expect.strip())
