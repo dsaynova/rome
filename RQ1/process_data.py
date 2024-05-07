@@ -65,7 +65,8 @@ def get_cos_sim(lama_scores, scores):
 
 def get_results_for_token_ix(results, token_ix, answer_for_token):
     results = dict(results)
-    results["scores"] = results["scores"][:,:,token_ix]
+    if not results["scores"] == np.array(None):
+        results["scores"] = results["scores"][:,:,token_ix]
     results["low_score"] = results["low_score"][token_ix]
     results["high_score"] = results["high_score"][token_ix]
     results["answer"] = answer_for_token #a bit hacky to get the answer as argument
@@ -73,7 +74,8 @@ def get_results_for_token_ix(results, token_ix, answer_for_token):
     
 def get_results_for_subject(results):
     # assumes that results already has been filtered by token_id
-    results["scores"] = results["scores"][results["subject_range"][0]:results["subject_range"][1],:]
+    if not results["scores"] == np.array(None):
+        results["scores"] = results["scores"][results["subject_range"][0]:results["subject_range"][1],:]
     results["input_tokens"] = results["input_tokens"][results["subject_range"][0]:results["subject_range"][1]]
     results["input_ids"] = results["input_ids"][results["subject_range"][0]:results["subject_range"][1]]
     results["subject_range"] = np.array([0,len(results["input_tokens"])])
