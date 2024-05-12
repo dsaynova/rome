@@ -14,5 +14,5 @@ source venv/bin/activate
 
 python -m pararel.fact_recall_detection.create_eval_dset \
     --model_name gpt2-xl \
-    --output_folder data/fact_recall_detection \
-    --data_path "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/data_creation/lama_data_queries.jsonl" \
+    --output_folder data/confident_fact_recall_detection \
+    --data_path "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/data_creation/final_splits/confident_fact_recall_preds.jsonl" \

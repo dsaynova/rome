@@ -20,10 +20,7 @@ def main(queries_data_file, ct_data_folder, output_file):
 
     for sample_ix in tqdm(range(len(queries))):
         for token_ix in range(10):
-            answer = queries.loc[sample_ix]["top10_tokens"][token_ix]
-                
-            # for any top pred
-            data_entry = get_data_entry(ct_data_folder, sample_ix, queries, token_ix, answer.strip())
+            data_entry = get_data_entry(ct_data_folder, queries.loc[sample_ix], token_ix)
             data.append(data_entry)
             
     data = pd.DataFrame(data)
@@ -31,16 +28,22 @@ def main(queries_data_file, ct_data_folder, output_file):
     print(f"Processed data has been saved to '{output_file}'.")
     return
 
-def get_data_entry(results_folder, sample_ix, queries, token_ix, answer):
-    results = np.load(os.path.join(results_folder, f"cases/{sample_ix}__mlp.npz"), allow_pickle=True)
+def get_data_entry(results_folder, queries_entry, token_ix):
+    try:
+        filename = os.path.join(results_folder, f"cases/{int(queries_entry['known_id'])}__mlp.npz")
+        results = np.load(filename, allow_pickle=True)
+    except FileNotFoundError:
+        print(f"Could not find file {filename}. Skipping...")
+        return None
+    answer = queries_entry["top10_tokens"][token_ix].strip()
     results = get_results_for_token_ix(results, token_ix, answer)
     results = get_results_for_subject(results)
 
-    data_entry = {"subject": queries.loc[sample_ix].subject,
-                 "template": queries.loc[sample_ix].template,
+    data_entry = {"subject": queries_entry.subject,
+                 "template": queries_entry.template,
                  "pred": answer,
                  "pred_rank": token_ix,
-                 "correct_answer": queries.loc[sample_ix].attribute,
+                 "correct_answer": queries_entry.attribute,
                  "te": results["high_score"]-results["low_score"],
                 }
     return data_entry
