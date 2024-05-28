@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH -p alvis
-#SBATCH -A NAISS2023-22-864
+#SBATCH -A NAISS2024-22-264
 #SBATCH -N 1
 #SBATCH --gpus-per-node=A40:1
 #SBATCH --job-name=causal-tracing-gpt2-xl-fact-recall-set
@@ -14,5 +14,5 @@ source venv/bin/activate
 
 python -m pararel.eval_on_fact_recall_set.causal_trace \
     --model_name "gpt2-xl" \
-    --fact_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/fact_recall_set.json" \
+    --fact_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/1000_exact.json" \
     --output_dir "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/causal_trace_${SLURM_JOB_ID}" 
