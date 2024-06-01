@@ -678,7 +678,12 @@ def decode_tokens(tokenizer, token_array):
     return [tokenizer.decode([t]) for t in token_array]
 
 
+
 def find_token_range(tokenizer, token_array, substring):
+    tok_start, tok_end = 0, len(tokenizer.encode(substring))
+    return (tok_start, tok_end)
+
+def find_token_range_old(tokenizer, token_array, substring):
     toks = decode_tokens(tokenizer, token_array)
     whole_string = "".join(toks)
     #for LLaMA

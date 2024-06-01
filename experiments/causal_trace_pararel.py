@@ -113,7 +113,7 @@ def main():
         known_id = knowledge["known_id"]
         for kind in ["mlp"]: # None, "mlp", "attn":
             kind_suffix = f"_{kind}" if kind else ""
-            for answer_type in ["any"]: #"gold", "candidate", "any":
+            for answer_type in ["candidate"]: #"gold", "candidate", "any":
                 filename = f"{result_dir}/{known_id}_{answer_type}{kind_suffix}.npz"
                 if not os.path.isfile(filename):
                     expect = knowledge[answer_type2expect_field[answer_type]]
