@@ -680,7 +680,10 @@ def decode_tokens(tokenizer, token_array):
 
 
 def find_token_range(tokenizer, token_array, substring):
-    tok_start, tok_end = 0, len(tokenizer.encode(substring))
+    if "LlamaTokenizer" in str(type(tokenizer)):
+        tok_start, tok_end = 1, len(tokenizer.encode(substring, add_special_tokens=False))+1
+    else:
+        tok_start, tok_end = 0, len(tokenizer.encode(substring))
     return (tok_start, tok_end)
 
 def find_token_range_old(tokenizer, token_array, substring):
@@ -727,7 +730,7 @@ def predict_proba_from_input(model, inp):
 def collect_embedding_std(mt, subjects):
     alldata = []
     for s in subjects:
-        inp = make_inputs(mt.tokenizer, [s])
+        inp = make_inputs(mt.tokenizer, [s], add_special_tokens=False)
         with nethook.Trace(mt.model, layername(mt.model, 0, "embed")) as t:
             mt.model(**inp)
             alldata.append(t.output[0])
