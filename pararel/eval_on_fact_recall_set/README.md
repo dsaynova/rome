@@ -112,7 +112,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
 # Random guesswork 
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/1000_guesswork.json" \
-    --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/causal_trace_guesswork_2384535/cases" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/causal_trace_guesswork_2388522/cases" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/summary_pdfs/random_guesswork" \
     --filename_template "knowledge_{}_mlp.npz" \
     --arch "gpt2-xl" \
@@ -129,17 +129,25 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
 
 # Synthetic prompt bias
 python -m pararel.eval_on_fact_recall_set.generate_plots \
-    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/synthetic_data/prompt_bias_bias.jsonl" \
-    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/synthetic_data/prompt_bias_bias/cases" \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/synthetic_data/prompt_bias_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/synthetic_data/prompt_bias_bias/cases" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/summary_pdfs/prompt_bias" \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/prompt_bias_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/prompt_bias_bias/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/summary_pdfs/prompt_bias" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2-7B" \
+    --archname "Llama-2-7B" \
+
 # Synthetic person name bias
 python -m pararel.eval_on_fact_recall_set.generate_plots \
-    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/synthetic_data/person_name_bias.jsonl" \
-    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/synthetic_data/person_name_bias/cases" \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/synthetic_data/person_name_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/synthetic_data/person_name_bias/cases" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/summary_pdfs/person_name_bias" \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "gpt2-xl" \
@@ -147,8 +155,8 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
 
 # Synthetic string match bias
 python -m pararel.eval_on_fact_recall_set.generate_plots \
-    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/synthetic_data/string_match_bias.jsonl" \
-    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/synthetic_data/string_match_bias/cases" \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/synthetic_data/string_match_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/synthetic_data/string_match_bias/cases" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/summary_pdfs/string_match_bias" \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "gpt2-xl" \
@@ -156,8 +164,8 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
 
 # Generic LM
 python -m pararel.eval_on_fact_recall_set.generate_plots \
-    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/generic_samples/generic_samples.jsonl" \
-    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/generic_samples/cases" \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/generic_samples/generic_samples.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/gpt2_xl/generic_samples/cases" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/summary_pdfs/generic_samples" \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "gpt2-xl" \
@@ -181,4 +189,22 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
+```
+
+## 5. Get special plots that are the combination of existing query files and CT results for different prediction mechanisms
+
+This dataset combines the exact recall, biased recall and random guesswork samples equally.
+
+1. Produce the dataset with the mixed samples using [get_combined_mechanisms_data.ipynb](get_combined_mechanisms_data.ipynb).
+2. Get the plots for the dataset using the code below.
+
+```bash
+module load PyTorch/1.11.0-foss-2021a-CUDA-11.3.1 torchvision/0.12.0-foss-2021a-PyTorch-1.11.0-CUDA-11.3.1
+source venv/bin/activate
+
+python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/1000_combined_mechanisms.json" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/gpt2-xl/summary_pdfs/combined_mechanisms" \
+    --arch "gpt2-xl" \
+    --archname "GPT-2-XL" \
 ```

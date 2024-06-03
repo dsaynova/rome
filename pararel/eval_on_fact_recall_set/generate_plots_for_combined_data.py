@@ -9,41 +9,17 @@ import math
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["mathtext.fontset"] = "dejavuserif"
 
-LABELS = [
-    "First subject token",
-    "Middle subject tokens",
-    "Last subject token",
-    "First subsequent token",
-    "Further tokens",
-    "Last token",
-]
+from pararel.eval_on_fact_recall_set.generate_plots import (
+    LINEPLOT_HIGH_SCORE, 
+    LINEPLOT_LOW_SCORE,
+    NORM_LINEPLOT_HIGH_SCORE,
+    NORM_LINEPLOT_LOW_SCORE,
+    Avg,
+    plot_array,
+    make_line_plot
+)
 
-LINEPLOT_HIGH_SCORE = 0.2
-LINEPLOT_LOW_SCORE = -0.02
-
-NORM_LINEPLOT_HIGH_SCORE = 0.4
-NORM_LINEPLOT_LOW_SCORE = -0.4
-
-class Avg:
-    def __init__(self):
-        self.d = []
-
-    def add(self, v):
-        self.d.append(v[None])
-
-    def add_all(self, vv):
-        self.d.append(vv)
-
-    def avg(self):
-        return np.concatenate(self.d).mean(axis=0)
-
-    def std(self):
-        return np.concatenate(self.d).std(axis=0)
-
-    def size(self):
-        return sum(datum.shape[0] for datum in self.d)
-
-def read_knowlege(indeces, dirname, filename_template, do_normalize=False):
+def read_combined_knowlege(queries, do_normalize=False):
     (
         avg_fe,
         avg_ee,
@@ -57,22 +33,21 @@ def read_knowlege(indeces, dirname, filename_template, do_normalize=False):
         avg_fle,
         avg_fla,
     ) = [Avg() for _ in range(11)]
-    for i in tqdm(indeces):
-        data = np.load(os.path.join(dirname, filename_template.format(i)))
+    for _, row in tqdm(queries.iterrows(), total=len(queries)):
+        data = np.load(os.path.join(row.CT_results_dir, row.filename_template.format(row.known_id)))
         # old: Only consider cases where the model begins with the correct prediction
         if "correct_prediction" in data and not data["correct_prediction"]:
             raise ValueError("Data marked as 'not correct prediction'")
-
-        scores = data["scores"]
+        scores = data["scores"].squeeze()
         if do_normalize:
-            scores = (scores-data["low_score"])/abs(data["high_score"]-data["low_score"])
+            scores = (scores-data["low_score"].squeeze())/abs(data["high_score"].squeeze()-data["low_score"].squeeze())
         first_e, first_a = data["subject_range"]
         last_e = first_a - 1
         last_a = len(scores) - 1
         # original prediction
-        avg_hs.add(data["high_score"])
+        avg_hs.add(data["high_score"].squeeze())
         # prediction after subject is corrupted
-        avg_ls.add(data["low_score"])
+        avg_ls.add(data["low_score"].squeeze())
         avg_fs.add(scores.max())
         # some maximum computations
         avg_fle.add(scores[last_e].max())
@@ -125,82 +100,6 @@ def read_knowlege(indeces, dirname, filename_template, do_normalize=False):
         low_score=avg_ls.avg(), result=result, result_std=result_std, size=avg_fe.size()
     )
 
-def plot_array(
-    differences,
-    kind=None,
-    savepdf=None,
-    title=None,
-    low_score=None,
-    high_score=None,
-    archname="GPT2-XL",
-    cbar_title="AIE"
-):
-    if low_score is None:
-        low_score = differences.min()
-    if high_score is None:
-        high_score = differences.max()
-
-    fig, ax = plt.subplots(figsize=(3.5, 2), dpi=200)
-    h = ax.pcolor(
-        differences,
-        cmap={None: "Purples", "mlp": "Greens", "attn": "Reds"}[kind],
-        vmin=low_score,
-        vmax=high_score,
-    )
-    if title:
-        ax.set_title(title)
-    ax.invert_yaxis()
-    ax.set_yticks([0.5 + i for i in range(len(differences))])
-    ax.set_xticks([0.5 + i for i in range(0, differences.shape[1] - 6, 5)])
-    ax.set_xticklabels(list(range(0, differences.shape[1] - 6, 5)))
-    ax.set_yticklabels(LABELS)
-    if kind is None:
-        ax.set_xlabel(f"single patched layer within {archname}")
-    else:
-        ax.set_xlabel(f"center of interval of 10 patched {kind} layers")
-    cb = plt.colorbar(h)
-    # The following should be cb.ax.set_xlabel(answer), but this is broken in matplotlib 3.5.1.
-    if cbar_title:
-        cb.ax.set_title(str(cbar_title).strip(), y=-0.16, fontsize=10)
-
-    if savepdf:
-        os.makedirs(os.path.dirname(savepdf), exist_ok=True)
-        plt.savefig(savepdf, bbox_inches="tight")
-
-def make_line_plot(result,
-                   result_std,
-                   low_score,
-                   high_score,
-                   count,
-                   archname,
-                   savepdf,
-                   ylabel="Average indirect effect on p(o)"
-                  ):
-    color_order = [0, 1, 2, 4, 5, 3]
-    x = None
-
-    cmap = plt.get_cmap("tab10")
-    fig, ax = plt.subplots(figsize=(5, 3.5), dpi=200)
-    for i, label in list(enumerate(LABELS)):
-        y = result[i]
-        if x is None:
-            x = list(range(len(y)))
-        std = result_std[i]
-        error = std * 1.96 / math.sqrt(count)
-        ax.fill_between(
-            x, y - error, y + error, alpha=0.3, color=cmap.colors[color_order[i]]
-        )
-        ax.plot(x, y, label=label, color=cmap.colors[color_order[i]])
-
-        ax.set_ylabel(ylabel)
-        ax.set_xlabel(f"Layer number in {archname}")
-    ax.legend(frameon=False)
-    plt.ylim([low_score, high_score])
-    plt.tight_layout()
-    if savepdf:
-        os.makedirs(os.path.dirname(savepdf), exist_ok=True)
-        plt.savefig(savepdf, bbox_inches="tight")
-
 def main(args):
     kind = "mlp"
     data = pd.read_json(args.query_file, lines=args.query_file.endswith(".jsonl"))
@@ -210,7 +109,7 @@ def main(args):
     count = len(data)
     
     print("Generating plots for CT results...")
-    d = read_knowlege(indeces=data.known_id.values, dirname=args.CT_folder, filename_template=args.filename_template)
+    d = read_combined_knowlege(data)
 
     # get 2D heatmap    
     result = np.clip(d["result"] - d["low_score"], 0, None)
@@ -265,8 +164,7 @@ def main(args):
     
     # normalized results
     print("Generating plots for normalized CT results...")
-    norm_d = read_knowlege(indeces=data.known_id.values, dirname=args.CT_folder, filename_template=args.filename_template,
-                    do_normalize=True)
+    norm_d = read_combined_knowlege(data, do_normalize=True)
     
     # get 2D heatmap
     plot_array(
@@ -280,7 +178,6 @@ def main(args):
         cbar_title="NAIE"
     )
     print("Normalized average CT results heatmap saved!")
-    
     
     # get lineplot without axis limits
     result = norm_d["result"]
@@ -315,25 +212,13 @@ if __name__ == "__main__":
         "--query_file",
         required=True,
         type=str,
-        help="File with queries to process, corresponding to the CT results.",
-    )
-    argparser.add_argument(
-        "--CT_folder",
-        required=True,
-        type=str,
-        help="Folder with CT results to plot, corresponding to the queries.",
+        help="File with combined queries to process, with corresponding CT results folders.",
     )
     argparser.add_argument(
         "--savefolder",
         required=True,
         type=str,
         help="Folder to save plot results to.",
-    )
-    argparser.add_argument(
-        "--filename_template",
-        required=True,
-        type=str,
-        help="Template used for the files with CT results.",
     )
     argparser.add_argument(
         "--arch",
