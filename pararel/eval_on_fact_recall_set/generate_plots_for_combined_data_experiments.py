@@ -15,22 +15,29 @@ from pararel.eval_on_fact_recall_set.generate_plots import (
 
 def main(args):
     kind = "mlp"
-    data = pd.read_json(args.query_file, lines=args.query_file.endswith(".jsonl"))
-    print(f"The data contains {len(data)} entries. Generating results for the first 1000...")
-    print()
-    data = data.iloc[:1000]
-    count = len(data)
-    
-    create_plots(data, kind, count, args.arch, args.archname, args.savefolder)
-
+    for f in os.listdir(args.query_folder):
+        filepath = os.path.join(args.query_folder, f)
+        if os.path.isfile(filepath):
+            print()
+            print()
+            print(f"Creating plots for {filepath}...")
+            data = pd.read_json(filepath, lines=filepath.endswith(".jsonl"))
+            print(f"The data contains {len(data)} entries. Generating results for the first 1000...")
+            print()
+            data = data.iloc[:1000]
+            count = len(data)
+            
+            savefolder = os.path.join(args.savefolder, f.split(".")[0])
+            create_plots(data, kind, count, args.arch, args.archname, savefolder)
+            
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
 
     argparser.add_argument(
-        "--query_file",
+        "--query_folder",
         required=True,
         type=str,
-        help="File with combined queries to process, with corresponding CT results folders.",
+        help="Folder with files with combined queries to process, with corresponding CT results folders.",
     )
     argparser.add_argument(
         "--savefolder",

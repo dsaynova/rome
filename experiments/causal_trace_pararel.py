@@ -105,9 +105,6 @@ def main():
             noise_level = float(noise_level[1:])
 
     answer_type2expect_field = {"gold": "attribute", "candidate": "candidate_prediction", "any": "prediction"}
-    answer_type2p_field = {"gold": "gold_p", "candidate": "candidate_p", "any": "prediction_p"}
-
-    candidates = set([knowledge["candidate_prediction"] for knowledge in knowns])
 
     for knowledge in tqdm(knowns):
         known_id = knowledge["known_id"]

@@ -18,11 +18,19 @@ LABELS = [
     "Last token",
 ]
 
-LINEPLOT_HIGH_SCORE = 0.2
-LINEPLOT_LOW_SCORE = -0.02
+LINEPLOT_HIGH_SCORE = {"gpt2-xl": 0.42,
+                       "llama2_7B": 0.34,
+                       }
+LINEPLOT_LOW_SCORE = {"gpt2-xl": -0.02,
+                      "llama2_7B": -0.02,
+                      }
 
-NORM_LINEPLOT_HIGH_SCORE = 0.4
-NORM_LINEPLOT_LOW_SCORE = -0.4
+NORM_LINEPLOT_HIGH_SCORE = {"gpt2-xl": 0.52,
+                            "llama2_7B": 0.7,
+                            }
+NORM_LINEPLOT_LOW_SCORE = {"gpt2-xl": -0.12,
+                           "llama2_7B": -0.1,
+                           }
 
 class Avg:
     def __init__(self):
@@ -43,7 +51,7 @@ class Avg:
     def size(self):
         return sum(datum.shape[0] for datum in self.d)
 
-def read_knowlege(indeces, dirname, filename_template, do_normalize=False):
+def read_knowledge(queries, savefolder, do_normalize=False, do_cap=False):
     (
         avg_fe,
         avg_ee,
@@ -57,22 +65,45 @@ def read_knowlege(indeces, dirname, filename_template, do_normalize=False):
         avg_fle,
         avg_fla,
     ) = [Avg() for _ in range(11)]
-    for i in tqdm(indeces):
-        data = np.load(os.path.join(dirname, filename_template.format(i)))
+    num_neg_te = 0
+    num_scores_above_one = 0
+    num_scores_below_minus_one = 0
+    num_capped_samples = 0
+    
+    for _, row in tqdm(queries.iterrows(), total=len(queries)):
+        data = np.load(os.path.join(row.CT_results_dir, row.filename_template.format(row.known_id)))
         # old: Only consider cases where the model begins with the correct prediction
         if "correct_prediction" in data and not data["correct_prediction"]:
-            raise ValueError("Data marked as 'not correct prediction'")
-
-        scores = data["scores"]
+            print("Error: Sample is marked as 'not correct prediction' and skipped for the plots")
+            continue
+    
+        scores = data["scores"].squeeze()
         if do_normalize:
-            scores = (scores-data["low_score"])/abs(data["high_score"]-data["low_score"])
+            scores = (scores-data["low_score"].squeeze())/abs(data["high_score"].squeeze()-data["low_score"].squeeze())
+        
+        # get statistics for problematic scores
+        sample_capped = False
+        if (data["high_score"].squeeze()-data["low_score"].squeeze()) < 0:
+            num_neg_te += 1
+        if np.any(scores>1):
+            num_scores_above_one +=1
+            sample_capped = True
+        if np.any(scores<-1):
+            num_scores_below_minus_one +=1
+            sample_capped = True
+        if sample_capped:
+            num_capped_samples += 1
+            
+        if do_cap:
+            scores = np.clip(scores, -1, 1)
+            
         first_e, first_a = data["subject_range"]
         last_e = first_a - 1
         last_a = len(scores) - 1
         # original prediction
-        avg_hs.add(data["high_score"])
+        avg_hs.add(data["high_score"].squeeze())
         # prediction after subject is corrupted
-        avg_ls.add(data["low_score"])
+        avg_ls.add(data["low_score"].squeeze())
         avg_fs.add(scores.max())
         # some maximum computations
         avg_fle.add(scores[last_e].max())
@@ -106,24 +137,182 @@ def read_knowlege(indeces, dirname, filename_template, do_normalize=False):
             avg_la.std(),
         ]
     )
-    print("Average Total Effect", avg_hs.avg() - avg_ls.avg())
-    print(
-        "Best average indirect effect on last subject",
-        avg_le.avg().max() - avg_ls.avg(),
-    )
-    print(
-        "Best average indirect effect on last token", avg_la.avg().max() - avg_ls.avg()
-    )
-    print("Average best-fixed score", avg_fs.avg())
-    print("Average best-fixed on last subject token score", avg_fle.avg())
-    print("Average best-fixed on last word score", avg_fla.avg())
-    print("Argmax at last subject token", np.argmax(avg_le.avg()))
-    print("Max at last subject token", np.max(avg_le.avg()))
-    print("Argmax at last prompt token", np.argmax(avg_la.avg()))
-    print("Max at last prompt token", np.max(avg_la.avg()))
+    
+    norm_extra = "_norm" if do_normalize else ""
+    stats_filename = f"read_knowledge_stats{norm_extra}.txt"
+    stats_filename = os.path.join(savefolder, stats_filename)
+    with open(stats_filename, "w+") as f:
+        f.write(f"Average Total Effect: {avg_hs.avg() - avg_ls.avg()}\n")
+        f.write(
+            f"Best average indirect effect on last subject: {avg_le.avg().max() - avg_ls.avg()}\n"
+        )
+        f.write(
+            f"Best average indirect effect on last token: {avg_la.avg().max() - avg_ls.avg()}\n"
+        )
+        f.write(f"Average best-fixed score: {avg_fs.avg()}\n")
+        f.write(f"Average best-fixed on last subject token score: {avg_fle.avg()}\n")
+        f.write(f"Average best-fixed on last word score: {avg_fla.avg()}\n")
+        f.write(f"Argmax at last subject token: {np.argmax(avg_le.avg())}\n")
+        f.write(f"Max at last subject token: {np.max(avg_le.avg())}\n")
+        f.write(f"Argmax at last prompt token: {np.argmax(avg_la.avg())}\n")
+        f.write(f"Max at last prompt token: {np.max(avg_la.avg())}\n")
+        f.write(f"Number of samples with negative TE: {num_neg_te} (of a total {len(queries)} samples)\n")
+        f.write(f"Number of samples with restored p (or proportion of p) above 1: {num_scores_above_one} (of a total {len(queries)} samples)\n")
+        f.write(f"Number of samples with restored p (or proportion of p) below -1: {num_scores_below_minus_one} (of a total {len(queries)} samples)\n")
+        f.write(f"Number of samples that have been capped for capped plot: {num_capped_samples} (of a total {len(queries)} samples)\n")
+        
+    print(f"Data stats saved to '{stats_filename}'!\n")
+    
     return dict(
         low_score=avg_ls.avg(), result=result, result_std=result_std, size=avg_fe.size()
     )
+    
+def create_plots(data, kind, count, arch, archname, savefolder):
+    if os.path.exists(savefolder):
+        print(f"{savefolder} already exists! Skipping... (remove it if you want to generate it anew)")
+        return
+    else:
+        os.makedirs(savefolder, exist_ok=False)
+    
+    print("Generating plots for CT results...")
+    d = read_knowledge(data, savefolder)
+
+    # get 2D heatmap    
+    result = np.clip(d["result"] - d["low_score"], 0, None)
+    plot_array(
+        np.squeeze(result),
+        kind=kind,
+        title=None,
+        low_score=0.0,
+        high_score=None,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "all_ranks.pdf"),
+    )
+    print("Average CT results heatmap saved!")
+        
+    # get lineplot without axis limits
+    result = d["result"] - d["low_score"]
+    result_std = d["result_std"]
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=None,
+        high_score=None,
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "line_plot_all_ranks_free_lim.pdf"),
+    )
+    # with axis limits
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=LINEPLOT_LOW_SCORE[arch],
+        high_score=LINEPLOT_HIGH_SCORE[arch],
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "line_plot_all_ranks.pdf"),
+    )
+    
+    # get lineplot that measures direct probability
+    result = d["result"]
+    result_std = d["result_std"]
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=LINEPLOT_LOW_SCORE[arch],
+        high_score=LINEPLOT_HIGH_SCORE[arch],
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "line_plot_prob_all_ranks.pdf"),
+    )
+    print("Average CT results line plot saved!")
+    print()
+    
+    # normalized results
+    print("Generating plots for normalized CT results...")
+    norm_d = read_knowledge(data, savefolder, do_normalize=True)
+    
+    # get 2D heatmap
+    plot_array(
+        np.squeeze(norm_d["result"]),
+        kind=kind,
+        title=None,
+        low_score=0.0,
+        high_score=None,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "all_ranks_norm.pdf"),
+        cbar_title="NAIE"
+    )
+    print("Normalized average CT results heatmap saved!")
+    
+    # get lineplot without axis limits
+    result = norm_d["result"]
+    result_std = norm_d["result_std"]
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=None,
+        high_score=None,
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks_free_lim.pdf"),
+        ylabel="Normalized AIE on p(o)"
+    )
+    # with axis limits
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=NORM_LINEPLOT_LOW_SCORE[arch],
+        high_score=NORM_LINEPLOT_HIGH_SCORE[arch],
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks.pdf"),
+        ylabel="Normalized AIE on p(o)"
+    )
+    print("Normalized average CT results line plot saved!")
+    
+    # normalized results - capped between [0,1]
+    print("Generating plots for capped normalized CT results...")
+    norm_d = read_knowledge(data, savefolder, do_normalize=True, do_cap=True)
+    
+    # get 2D heatmap
+    plot_array(
+        np.squeeze(norm_d["result"]),
+        kind=kind,
+        title=None,
+        low_score=0.0,
+        high_score=None,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "all_ranks_norm_capped.pdf"),
+        cbar_title="NAIE"
+    )
+    print("Normalized average CT results heatmap saved!")
+    
+    # get lineplot without axis limits
+    result = norm_d["result"]
+    result_std = norm_d["result_std"]
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=None,
+        high_score=None,
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks_free_lim_capped.pdf"),
+        ylabel="Normalized AIE on p(o)"
+    )
+    # with axis limits
+    make_line_plot(
+        np.squeeze(result),
+        np.squeeze(result_std),
+        low_score=NORM_LINEPLOT_LOW_SCORE[arch],
+        high_score=NORM_LINEPLOT_HIGH_SCORE[arch],
+        count=count,
+        archname=archname,
+        savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks_capped.pdf"),
+        ylabel="Normalized AIE on p(o)"
+    )
+    print("Normalized average CT results line plot saved!")
 
 def plot_array(
     differences,
@@ -164,8 +353,14 @@ def plot_array(
         cb.ax.set_title(str(cbar_title).strip(), y=-0.16, fontsize=10)
 
     if savepdf:
-        os.makedirs(os.path.dirname(savepdf), exist_ok=True)
         plt.savefig(savepdf, bbox_inches="tight")
+    plt.close("all")
+
+def export_legend(legend, filename):
+    fig  = legend.figure
+    fig.canvas.draw()
+    bbox  = legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    fig.savefig(filename, dpi="figure", bbox_inches=bbox)
 
 def make_line_plot(result,
                    result_std,
@@ -174,13 +369,13 @@ def make_line_plot(result,
                    count,
                    archname,
                    savepdf,
-                   ylabel="Average indirect effect on p(o)"
+                   ylabel="AIE on p(o)"
                   ):
     color_order = [0, 1, 2, 4, 5, 3]
     x = None
 
     cmap = plt.get_cmap("tab10")
-    fig, ax = plt.subplots(figsize=(5, 3.5), dpi=200)
+    fig, ax = plt.subplots(figsize=(4, 2.8), dpi=200)
     for i, label in list(enumerate(LABELS)):
         y = result[i]
         if x is None:
@@ -194,12 +389,15 @@ def make_line_plot(result,
 
         ax.set_ylabel(ylabel)
         ax.set_xlabel(f"Layer number in {archname}")
-    ax.legend(frameon=False)
+    legend = ax.legend(frameon=True, facecolor='white', framealpha=1)
     plt.ylim([low_score, high_score])
     plt.tight_layout()
     if savepdf:
-        os.makedirs(os.path.dirname(savepdf), exist_ok=True)
+        # save legend separately
+        export_legend(legend, os.path.join(os.path.dirname(savepdf), "legend.pdf"))
+        legend.remove()
         plt.savefig(savepdf, bbox_inches="tight")
+    plt.close("all")
 
 def main(args):
     kind = "mlp"
@@ -209,104 +407,10 @@ def main(args):
     data = data.iloc[:1000]
     count = len(data)
     
-    print("Generating plots for CT results...")
-    d = read_knowlege(indeces=data.known_id.values, dirname=args.CT_folder, filename_template=args.filename_template)
-
-    # get 2D heatmap    
-    result = np.clip(d["result"] - d["low_score"], 0, None)
-    plot_array(
-        np.squeeze(result),
-        kind=kind,
-        title=None,
-        low_score=0.0,
-        high_score=None,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "all_ranks.pdf"),
-    )
-    print("Average CT results heatmap saved!")
-        
-    # get lineplot without axis limits
-    result = d["result"] - d["low_score"]
-    result_std = d["result_std"]
-    make_line_plot(
-        np.squeeze(result),
-        np.squeeze(result_std),
-        low_score=None,
-        high_score=None,
-        count=count,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "line_plot_all_ranks_free_lim.pdf"),
-    )
-    # with axis limits
-    make_line_plot(
-        np.squeeze(result),
-        np.squeeze(result_std),
-        low_score=LINEPLOT_LOW_SCORE,
-        high_score=LINEPLOT_HIGH_SCORE,
-        count=count,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "line_plot_all_ranks.pdf"),
-    )
+    data["CT_results_dir"] = args.CT_folder
+    data["filename_template"] = args.filename_template
     
-    # get lineplot that measures direct probability
-    result = d["result"]
-    result_std = d["result_std"]
-    make_line_plot(
-        np.squeeze(result),
-        np.squeeze(result_std),
-        low_score=LINEPLOT_LOW_SCORE,
-        high_score=LINEPLOT_HIGH_SCORE,
-        count=count,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "line_plot_prob_all_ranks.pdf"),
-    )
-    print("Average CT results line plot saved!")
-    print()
-    
-    # normalized results
-    print("Generating plots for normalized CT results...")
-    norm_d = read_knowlege(indeces=data.known_id.values, dirname=args.CT_folder, filename_template=args.filename_template,
-                    do_normalize=True)
-    
-    # get 2D heatmap
-    plot_array(
-        np.squeeze(norm_d["result"]),
-        kind=kind,
-        title=None,
-        low_score=0.0,
-        high_score=None,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "all_ranks_norm.pdf"),
-        cbar_title="NAIE"
-    )
-    print("Normalized average CT results heatmap saved!")
-    
-    
-    # get lineplot without axis limits
-    result = norm_d["result"]
-    result_std = norm_d["result_std"]
-    make_line_plot(
-        np.squeeze(result),
-        np.squeeze(result_std),
-        low_score=None,
-        high_score=None,
-        count=count,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "norm_line_plot_all_ranks_free_lim.pdf"),
-        ylabel="Norm. average indirect effect on p(o)"
-    )
-    # with axis limits
-    make_line_plot(
-        np.squeeze(result),
-        np.squeeze(result_std),
-        low_score=NORM_LINEPLOT_LOW_SCORE,
-        high_score=NORM_LINEPLOT_HIGH_SCORE,
-        count=count,
-        archname=args.archname,
-        savepdf=os.path.join(args.savefolder, "norm_line_plot_all_ranks.pdf"),
-        ylabel="Norm. average indirect effect on p(o)"
-    )
-    print("Normalized average CT results line plot saved!")
+    create_plots(data, kind, count, args.arch, args.archname, args.savefolder)
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
