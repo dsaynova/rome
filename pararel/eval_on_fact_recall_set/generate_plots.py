@@ -256,7 +256,7 @@ def create_plots(data, kind, count, arch, archname, savefolder):
         count=count,
         archname=archname,
         savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks_free_lim.pdf"),
-        ylabel="Normalized AIE on p(o)"
+        ylabel="Normalized AIE"
     )
     # with axis limits
     make_line_plot(
@@ -267,7 +267,7 @@ def create_plots(data, kind, count, arch, archname, savefolder):
         count=count,
         archname=archname,
         savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks.pdf"),
-        ylabel="Normalized AIE on p(o)"
+        ylabel="Normalized AIE"
     )
     print("Normalized average CT results line plot saved!")
     
@@ -299,7 +299,7 @@ def create_plots(data, kind, count, arch, archname, savefolder):
         count=count,
         archname=archname,
         savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks_free_lim_capped.pdf"),
-        ylabel="Normalized AIE on p(o)"
+        ylabel="Normalized AIE"
     )
     # with axis limits
     make_line_plot(
@@ -310,7 +310,7 @@ def create_plots(data, kind, count, arch, archname, savefolder):
         count=count,
         archname=archname,
         savepdf=os.path.join(savefolder, "norm_line_plot_all_ranks_capped.pdf"),
-        ylabel="Normalized AIE on p(o)"
+        ylabel="Normalized AIE"
     )
     print("Normalized average CT results line plot saved!")
 
@@ -369,7 +369,7 @@ def make_line_plot(result,
                    count,
                    archname,
                    savepdf,
-                   ylabel="AIE on p(o)"
+                   ylabel="AIE"
                   ):
     color_order = [0, 1, 2, 4, 5, 3]
     x = None
