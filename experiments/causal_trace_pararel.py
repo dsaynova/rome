@@ -49,6 +49,7 @@ def main():
             "gpt2-medium",
             "gpt2",
             "meta-llama/Llama-2-7b-hf",
+            "meta-llama/Llama-2-13b-hf"
         ],
     )
     aa("--fact_file", default=None)

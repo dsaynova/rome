@@ -20,16 +20,20 @@ LABELS = [
 
 LINEPLOT_HIGH_SCORE = {"gpt2-xl": 0.42,
                        "llama2_7B": 0.34,
+                       "llama2_13B": 0.34
                        }
 LINEPLOT_LOW_SCORE = {"gpt2-xl": -0.02,
                       "llama2_7B": -0.02,
+                      "llama2_13B": -0.02,
                       }
 
 NORM_LINEPLOT_HIGH_SCORE = {"gpt2-xl": 0.52,
                             "llama2_7B": 0.7,
+                            "llama2_13B": 0.7,
                             }
 NORM_LINEPLOT_LOW_SCORE = {"gpt2-xl": -0.12,
                            "llama2_7B": -0.1,
+                           "llama2_13B": -0.1,
                            }
 
 class Avg:

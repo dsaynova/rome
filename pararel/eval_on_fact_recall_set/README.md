@@ -68,6 +68,12 @@ Use [pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_acc_rank_0_llam
 
 Use [pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_guesswork_llama2_7B.sh](pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_guesswork_llama2_7B.sh) for random guesswork samples.
 
+### Llama2-13B
+
+Use [pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_exact_llama2_13B.sh](pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_exact_llama2_13B.sh) for exact recall.
+
+Use [pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_guesswork_llama2_13B.sh](pararel/eval_on_fact_recall_set/alvis_script_causal_tracing_guesswork_llama2_13B.sh) for random guesswork samples.
+
 ## 3. Get the low/high confidence splits for the known samples
 Use [pararel/eval_on_fact_recall_set/split_knowns_by_confidence.ipynb](pararel/eval_on_fact_recall_set/split_knowns_by_confidence.ipynb) for this.
 
@@ -89,7 +95,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --filename_template "knowledge_{}_mlp.npz" \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_sensitivity_recall_eval_sets/llama2_7B/1000_exact.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/causal_trace_exact_2398046/cases" \
@@ -97,6 +103,14 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_sensitivity_recall_eval_sets/llama2_13B/1000_exact.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/causal_trace_exact_2904371/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/exact_recall" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \
 
 
 # Accurate
@@ -120,7 +134,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_sensitivity_recall_eval_sets/llama2_7B/1000_accurate_rank_0.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/causal_trace_acc_rank_0_2398047/cases" \
@@ -140,7 +154,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_sensitivity_recall_eval_sets/llama2_7B/1000_guesswork.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/causal_trace_guesswork_2398048/cases" \
@@ -148,7 +162,14 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \
-
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_sensitivity_recall_eval_sets/llama2_13B/1000_guesswork.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/causal_trace_guesswork_2904686/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/random_guesswork" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \
 
 # Knowns
 # GPT2
@@ -171,7 +192,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/prompt_bias_bias.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/prompt_bias_bias/cases" \
@@ -180,6 +201,14 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \
     
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/synthetic_data/prompt_bias_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/synthetic_data/prompt_bias_bias/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/prompt_bias" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \
 
 # Synthetic person name bias
 # GPT2
@@ -191,7 +220,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/person_name_bias.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/person_name_bias/cases" \
@@ -200,6 +229,14 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \    
 
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/synthetic_data/person_name_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/synthetic_data/person_name_bias/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/person_name_bias" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \ 
 
 # Synthetic string match bias
 # GPT2
@@ -211,7 +248,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/string_match_bias.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/synthetic_data/string_match_bias/cases" \
@@ -219,6 +256,15 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --filename_template "{}_candidate_mlp.npz" \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \    
+
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/synthetic_data/string_match_bias.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/synthetic_data/string_match_bias/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/string_match_bias" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \    
 
 # Generic LM
 # GPT2
@@ -230,7 +276,7 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots \
     --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/generic_samples/generic_samples.jsonl" \
     --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_7B/generic_samples/cases" \
@@ -239,6 +285,14 @@ python -m pararel.eval_on_fact_recall_set.generate_plots \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \  
 
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/generic_samples/generic_samples.jsonl" \
+    --CT_folder "/cephyr/users/lovhag/Alvis/projects/fact-recall-detection/data/CT_results/llama2_13B/generic_samples/generic_samples/cases" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/generic_samples" \
+    --filename_template "{}_candidate_mlp.npz" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \  
 
 # Knowns low confidence (<0.2, 501 samples)
 # GPT2
@@ -283,12 +337,19 @@ python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
     --query_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/1000_combined_mechanisms.json" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/summary_pdfs/combined_mechanisms" \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \
+
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/1000_combined_mechanisms.json" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/combined_mechanisms" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \
 ```
 
 ### Bias combo
@@ -308,12 +369,19 @@ python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
     --arch "gpt2-xl" \
     --archname "GPT-2-XL" \
 
-# Llama
+# Llama 2 7B
 python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
     --query_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/1000_combined_bias_mechanisms.json" \
     --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_7B/summary_pdfs/biased_recall" \
     --arch "llama2_7B" \
     --archname "Llama-2-7B" \
+
+# Llama 2 13B
+python -m pararel.eval_on_fact_recall_set.generate_plots_for_combined_data \
+    --query_file "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/1000_combined_bias_mechanisms.json" \
+    --savefolder "/cephyr/users/lovhag/Alvis/projects/rome/data/eval_on_fact_recall_set/llama2_13B/summary_pdfs/biased_recall" \
+    --arch "llama2_13B" \
+    --archname "Llama-2-13B" \
 ```
 
 ## 6. Further experiments with singleton samples and different combinations of prediction mechanisms
