@@ -27,7 +27,7 @@ LINEPLOT_LOW_SCORE = {"gpt2-xl": -0.02,
                       "llama2_13B": -0.02,
                       }
 
-NORM_LINEPLOT_HIGH_SCORE = {"gpt2-xl": 0.52,
+NORM_LINEPLOT_HIGH_SCORE = {"gpt2-xl": 0.4,
                             "llama2_7B": 0.7,
                             "llama2_13B": 0.7,
                             }
@@ -379,7 +379,7 @@ def make_line_plot(result,
     x = None
 
     cmap = plt.get_cmap("tab10")
-    fig, ax = plt.subplots(figsize=(4, 2.8), dpi=200)
+    fig, ax = plt.subplots(figsize=(4, 1.8), dpi=200)
     for i, label in list(enumerate(LABELS)):
         y = result[i]
         if x is None:
@@ -392,7 +392,7 @@ def make_line_plot(result,
         ax.plot(x, y, label=label, color=cmap.colors[color_order[i]])
 
         ax.set_ylabel(ylabel)
-        ax.set_xlabel(f"Layer number in {archname}")
+        ax.set_xlabel("layer")
     legend = ax.legend(frameon=True, facecolor='white', framealpha=1)
     plt.ylim([low_score, high_score])
     plt.tight_layout()
